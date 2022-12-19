@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, redirect, url_for
 from pymongo import MongoClient
 from flask_jwt_extended import JWTManager
 from flask_bcrypt import Bcrypt 
@@ -23,11 +23,15 @@ collection_name = db["users"]
 bcrypt = Bcrypt(app)
 jwt = JWTManager(app)
 
-@app.route("/signin", methods=['GET'])
+@app.route("/", methods=['GET'])
 def login_get():
     return render_template('signin.html')
 
-@app.route("/signin", methods=['POST'])
+@app.route("/success", methods=['GET'])
+def success():
+    return render_template('success.html')
+
+@app.route("/", methods=['POST'])
 def login_post():
     return render_template('signin.html')
 
@@ -58,12 +62,13 @@ def signup_post():
 
 
 
-        return jsonify(username + " registered")
+        return redirect(url_for("success"))
 
     else:
 
 
-        return jsonify("There is already a user with: " + username)
+        message = "There is already a user with: " + username
+        return render_template("signup.html", message = message)
 
 
 
