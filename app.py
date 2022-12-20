@@ -1,7 +1,8 @@
-from flask import Flask, render_template, jsonify, request, redirect, url_for, json
+from flask import Flask, render_template, request, redirect, url_for, jsonify, make_response
 from pymongo import MongoClient
 from flask_jwt_extended import JWTManager
 from flask_bcrypt import Bcrypt 
+from flask_jwt_extended import (create_access_token)
 
 app = Flask(__name__)
 
@@ -14,7 +15,7 @@ def get_database():
 
     return client['db']
 
-
+app.config["JWT_SECRET_KEY"] = 'secret'
 db = get_database()
 
 collection_name = db["users"]
@@ -30,7 +31,34 @@ def signin():
 
     else:
 
-        return render_template('signin.html')
+        username = request.form.get('username')
+        password =  request.form.get('password')
+
+        response = collection_name.find_one({'username':username})
+
+        if response:
+
+
+            if bcrypt.check_password_hash(response['password'], password):
+
+                access_token = create_access_token(identity = {
+				'username': response['username'],
+				'password': response['password'],
+				})
+
+
+                result = {'username': username, 'token': access_token}
+
+
+
+                result_json = jsonify(result)
+
+
+
+                return make_response(result_json, 200)
+
+
+
 
 
 @app.route("/success", methods=['GET'])
