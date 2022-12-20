@@ -1,8 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify, make_response
 from pymongo import MongoClient
-from flask_jwt_extended import JWTManager
 from flask_bcrypt import Bcrypt 
-from flask_jwt_extended import (create_access_token)
+import jwt
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 
@@ -22,7 +22,19 @@ collection_name = db["users"]
 
 
 bcrypt = Bcrypt(app)
-jwt = JWTManager(app)
+
+
+'''
+def token_required():
+
+    token = request.args.get('token')
+    try:
+        jwt.decode(token, app.config["JWT_SECRET_KEY"])
+    except:
+        return jsonify({'Message': 'Invalid token'}), 403
+
+'''
+
 
 @app.route("/signin", methods=['GET', 'POST'])
 def signin():
@@ -41,21 +53,17 @@ def signin():
 
             if bcrypt.check_password_hash(response['password'], password):
 
-                access_token = create_access_token(identity = {
-				'username': response['username'],
-				'password': response['password'],
-				})
+                access_token = jwt.encode({
+                'username': username,
+                'exp' : datetime.utcnow() + timedelta(minutes = 30)
+                }, app.config["JWT_SECRET_KEY"])
 
 
                 result = {'username': username, 'token': access_token}
 
 
 
-                result_json = jsonify(result)
-
-
-
-                return make_response(result_json, 200)
+                return make_response(result, 200)
 
 
 
@@ -87,7 +95,7 @@ def signup():
 
 
 
-            return redirect(url_for("success"))
+            return redirect(url_for("signin"))
 
         else:
 
