@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify, request, redirect, url_for
+from flask import Flask, render_template, jsonify, request, redirect, url_for, json
 from pymongo import MongoClient
 from flask_jwt_extended import JWTManager
 from flask_bcrypt import Bcrypt 
@@ -23,52 +23,52 @@ collection_name = db["users"]
 bcrypt = Bcrypt(app)
 jwt = JWTManager(app)
 
-@app.route("/", methods=['GET'])
-def login_get():
-    return render_template('signin.html')
+@app.route("/signin", methods=['GET', 'POST'])
+def signin():
+    if (request.method == 'GET'):
+        return render_template('signin.html')
+
+    else:
+
+        return render_template('signin.html')
+
 
 @app.route("/success", methods=['GET'])
 def success():
     return render_template('success.html')
 
-@app.route("/", methods=['POST'])
-def login_post():
-    return render_template('signin.html')
+
+@app.route("/signup", methods=['POST', 'GET'])
+def signup():
+    if (request.method == 'POST'):
+        username = request.form.get('username')
+        name = request.form.get('name')
+        surname = request.form.get('surname')
+        password = bcrypt.generate_password_hash(request.form.get('password')).decode('utf-8')
 
 
-@app.route("/signup", methods=['GET'])
-def signup_get():
-    return render_template('signup.html')
+        user_found = collection_name.find_one({"username": username})
+
+        if user_found == None:
 
 
-@app.route("/signup", methods=['POST'])
-def signup_post():
-
-    username = request.get_json()['username']
-    name = request.get_json()['name']
-    surname = request.get_json()['surname']
-    password = bcrypt.generate_password_hash(request.get_json()['password']).decode('utf-8')
+            user_input = {'username': username, 'name': name, 'surname': surname, 'password': password}
 
 
-    user_found = collection_name.find_one({"username": username})
-
-    if user_found == None:
-
-
-        user_input = {'username': username, 'name': name, 'password': password, 'surname': surname}
-
-
-        collection_name.insert_one(user_input)
+            collection_name.insert_one(user_input)
 
 
 
-        return redirect(url_for("success"))
+            return redirect(url_for("success"))
 
+        else:
+
+
+            message = "There is already a user with: " + username + "please try another username"
+            return render_template("signup.html", message = message)
     else:
 
-
-        message = "There is already a user with: " + username
-        return render_template("signup.html", message = message)
+        return render_template('signup.html')
 
 
 
