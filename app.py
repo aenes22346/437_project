@@ -65,6 +65,12 @@ def signin():
 
                 return make_response(result, 200)
 
+            else:
+
+
+                message = "Wrong password or username"
+                return make_response(render_template("signin.html", message = message))
+
 
 
 
