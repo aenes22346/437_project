@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify, make_response
+from flask import Flask, render_template, request, redirect, url_for, jsonify, make_response, session
 from pymongo import MongoClient
 from flask_bcrypt import Bcrypt 
 import jwt
@@ -16,17 +16,14 @@ def get_database():
     return client['db']
 
 app.config["JWT_SECRET_KEY"] = 'secret'
+app.secret_key = 'secret2'
+
 db = get_database()
 
 collection_name = db["users"]
 
 
 bcrypt = Bcrypt(app)
-
-
-set_token = ""
-set_exp = 1800
-set_user = ""
 
 
 @app.route("/signin", methods=['GET', 'POST'])
@@ -51,14 +48,11 @@ def signin():
                 'exp' : datetime.utcnow() + timedelta(minutes = 30)
                 }, app.config["JWT_SECRET_KEY"])
 
+                session['set_token'] = access_token
 
-                global set_token, set_exp, set_user
+                session['set_exp'] = 1800
 
-                set_token = access_token
-
-                set_user = username
-
-                print("we are seeing: ", set_exp)
+                session['set_user'] = username
 
                 result = {'username': username, 'token': access_token}
 
@@ -74,23 +68,25 @@ def signin():
 
 def profile():
 
-    global set_token, set_exp, set_user
+    print("evet süren doldu ya aq")
 
     now = datetime.utcnow()
 
-    exp_time = now + timedelta(seconds=set_exp)
+    exp_time = now + timedelta(seconds=session['set_exp'])
 
     if now > exp_time:
 
-        set_exp = 0
-        set_token = ""
-        set_user = ""
+        session.pop('set_user', None)
+        session.pop('set_token', None)
+        session.pop('set_exp', None)
+
+        return make_response(jsonify({'msg': "token is not valid"}), 200)
 
     
     else:
 
 
-        user_profile = collection_name.find_one({'username': set_user}, projection={"adress": 0, "credit_number": 0, "cvc": 0})
+        user_profile = collection_name.find_one({'username': session['set_user']}, projection={"adress": 0, "credit_number": 0, "cvc": 0})
 
         return make_response(render_template("success.html", user_profile = user_profile))
 
