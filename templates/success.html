@@ -5,9 +5,35 @@
       <center>
         
         <h1> CONGRATS </h1>
-        <h1> {{ result_json
-          }} </h1>
+
+        <form action="./api/v2/customer/profile" method="get">
+          <button class="submit"> For seeing your profile information click here </button>
+        </form>
+
+
+        <td class = "tdstyle">{{user_profile}}</td>
 
       </center>   
 </body>
 </html>
+
+
+
+<style>
+
+
+.submit:hover {
+  box-shadow: 0 12px 16px 0 rgba(0,0,0,0.24), 0 17px 50px 0 rgba(0,0,0,0.19);
+}
+
+.submit {
+    padding: 16px 50px;
+    background-color: green;
+    color: beige;
+    width: 15%;
+    
+}
+
+
+
+</style>

@@ -24,16 +24,9 @@ collection_name = db["users"]
 bcrypt = Bcrypt(app)
 
 
-'''
-def token_required():
-
-    token = request.args.get('token')
-    try:
-        jwt.decode(token, app.config["JWT_SECRET_KEY"])
-    except:
-        return jsonify({'Message': 'Invalid token'}), 403
-
-'''
+set_token = ""
+set_exp = 1800
+set_user = ""
 
 
 @app.route("/signin", methods=['GET', 'POST'])
@@ -59,11 +52,17 @@ def signin():
                 }, app.config["JWT_SECRET_KEY"])
 
 
+                global set_token, set_exp, set_user
+
+                set_token = access_token
+
+                set_user = username
+
+                print("we are seeing: ", set_exp)
+
                 result = {'username': username, 'token': access_token}
 
-
-
-                return make_response(result, 200)
+                return make_response(render_template("success.html", result = result))
 
             else:
 
@@ -71,13 +70,30 @@ def signin():
                 message = "Wrong password or username"
                 return make_response(render_template("signin.html", message = message))
 
+@app.route("/api/v2/customer/profile", methods=['GET'])
+
+def profile():
+
+    global set_token, set_exp, set_user
+
+    now = datetime.utcnow()
+
+    exp_time = now + timedelta(seconds=set_exp)
+
+    if now > exp_time:
+
+        set_exp = 0
+        set_token = ""
+        set_user = ""
+
+    
+    else:
 
 
+        user_profile = collection_name.find_one({'username': set_user}, projection={"adress": 0, "credit_number": 0, "cvc": 0})
 
+        return make_response(render_template("success.html", user_profile = user_profile))
 
-@app.route("/success", methods=['GET'])
-def success():
-    return render_template('success.html')
 
 
 @app.route("/signup", methods=['POST', 'GET'])
