@@ -68,8 +68,6 @@ def signin():
 
 def profile():
 
-    print("evet süren doldu ya aq")
-
     now = datetime.utcnow()
 
     exp_time = now + timedelta(seconds=session['set_exp'])
@@ -86,9 +84,9 @@ def profile():
     else:
 
 
-        user_profile = collection_name.find_one({'username': session['set_user']}, projection={"adress": 0, "credit_number": 0, "cvc": 0})
+        user_profile = collection_name.find_one({'username': session['set_user']}, projection={"adress": 0, "credit_number": 0, "cvc": 0, "_id": 0})
 
-        return make_response(render_template("success.html", user_profile = user_profile))
+        return user_profile
 
 
 
