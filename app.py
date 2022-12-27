@@ -3,6 +3,8 @@ from pymongo import MongoClient
 from flask_bcrypt import Bcrypt 
 import jwt
 from datetime import datetime, timedelta
+from functools import wraps
+from jwt.exceptions import ExpiredSignatureError
 
 app = Flask(__name__)
 
@@ -26,7 +28,39 @@ collection_name = db["users"]
 bcrypt = Bcrypt(app)
 
 
-@app.route("/signin", methods=['GET', 'POST'])
+
+def token_required(f):
+    @wraps(f)
+    def decorator(*args, **kwargs):
+
+        token = session['set_token']
+        if token == None:
+            
+            return render_template('error.html', error = {'message': 'Token is missing'}) # Output: KeyError: 'set_token' when session popped
+
+
+        try:
+
+            data = jwt.decode(token, app.config["JWT_SECRET_KEY"], algorithms=['HS256'])
+
+
+            if datetime.fromtimestamp(data['exp']) < datetime.utcnow():
+
+                raise ExpiredSignatureError
+
+        except ExpiredSignatureError:
+
+
+            return render_template('error.html', error = {'message': 'Token is invalid'})
+
+        return f(*args, **kwargs)
+
+    return decorator
+
+
+
+
+@app.route("/", methods=['GET', 'POST'])
 def signin():
     if (request.method == 'GET'):
         return render_template('signin.html')
@@ -45,12 +79,10 @@ def signin():
 
                 access_token = jwt.encode({
                 'username': username,
-                'exp' : datetime.utcnow() + timedelta(minutes = 30)
+                'exp' : datetime.utcnow() + timedelta(seconds = 5)
                 }, app.config["JWT_SECRET_KEY"])
 
                 session['set_token'] = access_token
-
-                session['set_exp'] = 1800
 
                 session['set_user'] = username
 
@@ -66,27 +98,13 @@ def signin():
 
 @app.route("/api/v2/customer/profile", methods=['GET'])
 
+@token_required
+
 def profile():
-
-    now = datetime.utcnow()
-
-    exp_time = now + timedelta(seconds=session['set_exp'])
-
-    if now > exp_time:
-
-        session.pop('set_user', None)
-        session.pop('set_token', None)
-        session.pop('set_exp', None)
-
-        return make_response(jsonify({'msg': "token is not valid"}), 200)
-
-    
-    else:
-
 
         user_profile = collection_name.find_one({'username': session['set_user']}, projection={"adress": 0, "credit_number": 0, "cvc": 0, "_id": 0})
 
-        return user_profile
+        return make_response(render_template('profile.html', user_profile = user_profile))
 
 
 
@@ -121,6 +139,19 @@ def signup():
     else:
 
         return render_template('signup.html')
+
+
+
+@app.route("/logout", methods=['POST'])
+def logout():
+
+
+    session.pop('set_user', None)
+    session.pop('set_token', None)
+
+    return redirect(url_for("/"))
+
+
 
 
 
