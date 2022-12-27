@@ -18,7 +18,6 @@ def get_database():
     return client['db']
 
 app.config["JWT_SECRET_KEY"] = 'secret'
-app.secret_key = 'secret2'
 
 db = get_database()
 
@@ -88,13 +87,13 @@ def signin():
 
                 result = {'username': username, 'token': access_token}
 
-                return make_response(render_template("success.html", result = result))
+                return render_template("success.html", result = result)
 
             else:
 
 
                 message = "Wrong password or username"
-                return make_response(render_template("signin.html", message = message))
+                return render_template("signin.html", message = message)
 
 @app.route("/api/v2/customer/profile", methods=['GET'])
 
@@ -104,7 +103,7 @@ def profile():
 
         user_profile = collection_name.find_one({'username': session['set_user']}, projection={"adress": 0, "credit_number": 0, "cvc": 0, "_id": 0})
 
-        return make_response(render_template('profile.html', user_profile = user_profile))
+        return render_template('profile.html', user_profile = user_profile)
 
 
 
@@ -153,7 +152,5 @@ def logout():
 
 
 
-
-
 if __name__ == '__main__':
-    app.run(debug = True)
+    app.run(debug = False)
