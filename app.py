@@ -18,6 +18,7 @@ def get_database():
     return client['db']
 
 app.config["JWT_SECRET_KEY"] = 'secret'
+app.config["SECRET_KEY"] = 'secret2'
 
 db = get_database()
 
@@ -32,10 +33,16 @@ def token_required(f):
     @wraps(f)
     def decorator(*args, **kwargs):
 
-        token = session['set_token']
-        if token == None:
-            
-            return render_template('error.html', error = {'message': 'Token is missing'}) # Output: KeyError: 'set_token' when session popped
+
+        try:
+
+
+            token = session['set_token']
+
+        except KeyError:  #gives exception when token == None
+
+
+            return render_template('error.html', error = 'Token is missing') # Output: KeyError: 'set_token' when session popped
 
 
         try:
@@ -43,14 +50,12 @@ def token_required(f):
             data = jwt.decode(token, app.config["JWT_SECRET_KEY"], algorithms=['HS256'])
 
 
-            if datetime.fromtimestamp(data['exp']) < datetime.utcnow():
+            #if datetime.fromtimestamp(data['exp']) < datetime.utcnow():    this line is an alternative to check token valid time and current time however it is better to use jwt's own token checker
 
-                raise ExpiredSignatureError
-
-        except ExpiredSignatureError:
+        except jwt.ExpiredSignatureError:    #this is a typical exception for expired dated token
 
 
-            return render_template('error.html', error = {'message': 'Token is invalid'})
+            return render_template('error.html', error = 'Token is invalid')
 
         return f(*args, **kwargs)
 
@@ -78,7 +83,7 @@ def signin():
 
                 access_token = jwt.encode({
                 'username': username,
-                'exp' : datetime.utcnow() + timedelta(seconds = 5)
+                'exp' : datetime.utcnow() + timedelta(seconds = 10)
                 }, app.config["JWT_SECRET_KEY"])
 
                 session['set_token'] = access_token
@@ -97,13 +102,13 @@ def signin():
 
 @app.route("/api/v2/customer/profile", methods=['GET'])
 
-@token_required
+@token_required     #this decorator uses for catching token and session exceptions when user requests to above route
 
 def profile():
 
-        user_profile = collection_name.find_one({'username': session['set_user']}, projection={"adress": 0, "credit_number": 0, "cvc": 0, "_id": 0})
+        user_profile = collection_name.find_one({'username': session['set_user']}, projection={"exp": 0, "cc_num": 0, "cvc": 0, "payment": 0, "_id": 0})
 
-        return render_template('profile.html', user_profile = user_profile)
+        return make_response(render_template('profile.html', user_profile = user_profile))
 
 
 
@@ -148,7 +153,7 @@ def logout():
     session.pop('set_user', None)
     session.pop('set_token', None)
 
-    return redirect(url_for("/"))
+    return redirect("/signin")
 
 
 

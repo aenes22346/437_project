@@ -6,11 +6,19 @@
         
         <h1> HERE IS YOUR PROFILE </h1>
 
-        {% for key, value in user_profile.items() %}
-        <p>{{ key }}: {{value }}</p>
-        {% endfor %}
+        <p>Adress: {{user_profile['adress']}}</p>
+
+
+        <p>Loyalty_Point: {{user_profile['loyalty_point']}}</p>
+
+
+        <p>Site/App Preferences: {{user_profile['site/app_preferences']}}</p>
 
       </center>   
+
+      <form>
+        <button class="submit" hx-post = "/logout"> LOGOUT </button>
+      </form>
 </body>
 </html>
 
@@ -24,7 +32,7 @@
 }
 
 .submit {
-    padding: 16px 50px;
+    padding: 16px 20px;
     background-color: green;
     color: beige;
     width: 15%;
