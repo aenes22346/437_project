@@ -17,8 +17,12 @@
       </center>   
 
       <form>
-        <button class="submit" hx-post = "/logout"> LOGOUT </button>
+        <button class="submit" hx-post = "/logout" hx-target="#logout-message" hx-redirect="/"> LOGOUT </button>
       </form>
+
+      <div id="logout-message">
+        
+      </div>
 </body>
 </html>
 

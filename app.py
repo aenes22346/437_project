@@ -106,9 +106,9 @@ def signin():
 
 def profile():
 
-        user_profile = collection_name.find_one({'username': session['set_user']}, projection={"exp": 0, "cc_num": 0, "cvc": 0, "payment": 0, "_id": 0})
+        user_profile = collection_name.find_one({'username': session['set_user']}, projection={"exp": 0, "cc_num": 0, "cvc": 0, "payment": 0, "_id": 0}) #protection line of excessive data exposure
 
-        return make_response(render_template('profile.html', user_profile = user_profile))
+        return make_response(render_template('profile.html', user_profile = user_profile))   # returns a html page and user information as json
 
 
 
@@ -153,7 +153,8 @@ def logout():
     session.pop('set_user', None)
     session.pop('set_token', None)
 
-    return redirect("/signin")
+    message = "You are now logged out go to signin page"
+    return message
 
 
 
