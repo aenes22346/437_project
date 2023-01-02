@@ -5,6 +5,7 @@ import jwt
 from datetime import datetime, timedelta
 from functools import wraps
 from jwt.exceptions import ExpiredSignatureError
+from flask_talisman import Talisman
 
 app = Flask(__name__)
 
@@ -158,4 +159,5 @@ def logout():
 
 
 if __name__ == '__main__':
-    app.run(debug = False)
+    
+    app.run(host='127.0.0.1', debug=True, ssl_context=("cert.pem", "priv_key.pem"))
