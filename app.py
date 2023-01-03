@@ -113,14 +113,14 @@ def profile():
 
         ''' VULNERABLE LINES WAS COMMENTED
 
-        user_profile = collection_name.find_one({'username': session['set_user']}) #protection line of excessive data exposure
+        user_profile = collection_name.find_one({'username': session['set_user']})
 
         object_id = ObjectId(user_profile['_id'])    #114-115 lines is for getting rid of "Object of type ObjectId is not JSON serializable" error, database returns unique id which is in bson library
         user_profile['_id'] = json.dumps(str(object_id))
 
         '''
 
-        return user_profile   # returns a html page and user information as json
+        return make_response(render_template("profile.html", user_profile = user_profile))  # returns a html page and all user information as json
 
 
 
