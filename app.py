@@ -160,4 +160,4 @@ def logout():
 
 if __name__ == '__main__':
     
-    app.run(host='127.0.0.1', debug=True, ssl_context=("cert.pem", "priv_key.pem"))
+    app.run(debug=True, ssl_context=("cert.pem", "priv_key.pem"))
