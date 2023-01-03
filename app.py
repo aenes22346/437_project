@@ -5,7 +5,8 @@ import jwt
 from datetime import datetime, timedelta
 from functools import wraps
 from jwt.exceptions import ExpiredSignatureError
-from flask_talisman import Talisman
+from bson.objectid import ObjectId
+import json
 
 app = Flask(__name__)
 
@@ -67,33 +68,34 @@ def token_required(f):
 
 @app.route("/", methods=['GET', 'POST'])
 def signin():
-    if (request.method == 'GET'):
-        return render_template('signin.html')
+    if (request.method == 'GET'):        #This get request is for seeing the page when "/" endpoint triggered
+        return render_template('signin.html')   #then we see the sigin page automatically
 
     else:
-
+        #due to usage of form request from html request.form.get is used
         username = request.form.get('username')
         password =  request.form.get('password')
 
+        #with getting username input collection in the database will be checking
         response = collection_name.find_one({'username':username})
 
-        if response:
+        if response:     #if response true which means user is found
 
 
-            if bcrypt.check_password_hash(response['password'], password):
+            if bcrypt.check_password_hash(response['password'], password):   #then password checking will be needed
 
-                access_token = jwt.encode({
+                access_token = jwt.encode({     #after successfully entered correct credentials token will be created for client
                 'username': username,
                 'exp' : datetime.utcnow() + timedelta(seconds = 10)
                 }, app.config["JWT_SECRET_KEY"])
 
-                session['set_token'] = access_token
+                #session attribute of flask will be used during the client logins, token and its username stored in session
+                session['set_token'] = access_token     
 
                 session['set_user'] = username
 
-                result = {'username': username, 'token': access_token}
 
-                return render_template("success.html", result = result)
+                return render_template("success.html", result = username)    #we do not pass token to the client because token inside the responding data is not a good idea
 
             else:
 
@@ -107,9 +109,18 @@ def signin():
 
 def profile():
 
-        user_profile = collection_name.find_one({'username': session['set_user']}, projection={"exp": 0, "cc_num": 0, "cvc": 0, "payment": 0, "_id": 0})
+        user_profile = collection_name.find_one({'username': session['set_user']}, projection={"exp": 0, "cc_num": 0, "cvc": 0, "payment": 0, "_id": 0, "password": 0, "name": 0, "surname": 0}) #protection line of excessive data exposure
 
-        return make_response(render_template('profile.html', user_profile = user_profile))
+        ''' VULNERABLE LINES WAS COMMENTED
+
+        user_profile = collection_name.find_one({'username': session['set_user']})
+
+        object_id = ObjectId(user_profile['_id'])    #114-115 lines is for getting rid of "Object of type ObjectId is not JSON serializable" error, database returns unique id which is in bson library
+        user_profile['_id'] = json.dumps(str(object_id))
+
+        '''
+
+        return make_response(render_template("profile.html", user_profile = user_profile))  # returns a html page and all user information as json
 
 
 
@@ -129,13 +140,13 @@ def signup():
 
             user_input = {'username': username, 'name': name, 'surname': surname, 'password': password}
 
-
+            #according to collected data from client above user input will be inserted to database
             collection_name.insert_one(user_input)
 
 
 
             return redirect(url_for("signin"))
-
+        #if user is found error message will be shown into register page
         else:
 
 
@@ -154,7 +165,8 @@ def logout():
     session.pop('set_user', None)
     session.pop('set_token', None)
 
-    return redirect("/signin")
+    message = "You are now logged out go to signin page"
+    return message
 
 
 
